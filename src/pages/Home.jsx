@@ -9,38 +9,53 @@ export default function Home() {
   const [cuisine, setCuisine] = useState("")
 
   useEffect(() => {
-    loadDefault()
-  }, [])
+    applyFilters()
+  }, [search, category, cuisine])
 
-  const loadDefault = async () => {
-    const data = await searchMeals("")
-    setRecipes(data)
+  const applyFilters = async () => {
+    if (!category && !cuisine) {
+      const data = await searchMeals(search)
+      setRecipes(data)
+      return
+    }
+
+    if (category && cuisine) {
+      const [byCategory, byCuisine] = await Promise.all([
+        getByCategory(category),
+        getByCuisine(cuisine),
+      ])
+
+      const byCuisineIds = new Set(byCuisine.map((meal) => meal.idMeal))
+      const combined = byCategory.filter((meal) => byCuisineIds.has(meal.idMeal))
+      const filteredBySearch = search
+        ? combined.filter((meal) => meal.strMeal.toLowerCase().includes(search.toLowerCase()))
+        : combined
+
+      setRecipes(filteredBySearch)
+      return
+    }
+
+    const singleFilterData = category
+      ? await getByCategory(category)
+      : await getByCuisine(cuisine)
+
+    const filteredBySearch = search
+      ? singleFilterData.filter((meal) => meal.strMeal.toLowerCase().includes(search.toLowerCase()))
+      : singleFilterData
+
+    setRecipes(filteredBySearch)
   }
 
-  const handleSearch = async (value) => {
+  const handleSearch = (value) => {
     setSearch(value)
-    const data = await searchMeals(value)
-    setRecipes(data)
   }
 
-  const handleCategory = async (cat) => {
+  const handleCategory = (cat) => {
     setCategory(cat)
-    setCuisine("")
-    const data =
-      cat === ""
-        ? await searchMeals("")
-        : await getByCategory(cat)
-    setRecipes(data)
   }
 
-  const handleCuisine = async (c) => {
+  const handleCuisine = (c) => {
     setCuisine(c)
-    setCategory("")
-    const data =
-      c === ""
-        ? await searchMeals("")
-        : await getByCuisine(c)
-    setRecipes(data)
   }
 
   return (
@@ -82,7 +97,7 @@ export default function Home() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {recipes.map((recipe) => (
           <Link
             key={recipe.idMeal}
@@ -96,6 +111,10 @@ export default function Home() {
           </Link>
         ))}
       </div>
+
+      {recipes.length === 0 && (
+        <p className="mt-4 text-sm text-slate-500">No recipes found for this filter combination.</p>
+      )}
     </div>
   )
 }
