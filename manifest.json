@@ -10,8 +10,8 @@
 	"orientation": "portrait-primary",
 	"icons": [
 		{
-			"src": "/src/assets/icons/Meal-planner-app-logo.png",
-			"sizes": "any",
+			"src": "/meal-planner-icon.png",
+			"sizes": "512x512",
 			"type": "image/png",
 			"purpose": "any maskable"
 		}
