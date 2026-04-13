@@ -98,6 +98,13 @@ export default function RecipeDetail() {
           ))}
         </ul>
       </div>
+
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 className="mb-2 text-xl font-semibold">How to make it</h2>
+        <p className="whitespace-pre-line text-sm leading-6 text-slate-700">
+          {recipe.strInstructions?.trim() || "No preparation instructions available for this recipe."}
+        </p>
+      </div>
     </div>
   )
 }
