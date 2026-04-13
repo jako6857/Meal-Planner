@@ -1,49 +1,53 @@
 import React, { useEffect, useState } from "react"
-import { searchMeals, getByCategory, getByCuisine } from "../lib/mealsApi"
+import { searchMeals } from "../lib/mealsApi"
 import { Link } from "react-router-dom"
+
+const PAGE_SIZE = 20
 
 export default function Home() {
   const [recipes, setRecipes] = useState([])
   const [search, setSearch] = useState("")
   const [category, setCategory] = useState("")
   const [cuisine, setCuisine] = useState("")
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   useEffect(() => {
-    applyFilters()
+    const timer = setTimeout(() => {
+      loadRecipes({ page: 1, append: false })
+    }, 250)
+
+    return () => clearTimeout(timer)
   }, [search, category, cuisine])
 
-  const applyFilters = async () => {
-    if (!category && !cuisine) {
-      const data = await searchMeals(search)
-      setRecipes(data)
-      return
+  const loadRecipes = async ({ page: nextPage, append }) => {
+    try {
+      setLoading(true)
+      setError("")
+
+      const result = await searchMeals({
+        query: search,
+        category,
+        cuisine,
+        page: nextPage,
+        pageSize: PAGE_SIZE,
+      })
+
+      setTotal(result.total)
+      setPage(nextPage)
+      setRecipes((prev) => (append ? [...prev, ...result.items] : result.items))
+    } catch (err) {
+      setError(err.message || "Failed to load recipes")
+      if (!append) {
+        setRecipes([])
+        setTotal(0)
+        setPage(1)
+      }
+    } finally {
+      setLoading(false)
     }
-
-    if (category && cuisine) {
-      const [byCategory, byCuisine] = await Promise.all([
-        getByCategory(category),
-        getByCuisine(cuisine),
-      ])
-
-      const byCuisineIds = new Set(byCuisine.map((meal) => meal.idMeal))
-      const combined = byCategory.filter((meal) => byCuisineIds.has(meal.idMeal))
-      const filteredBySearch = search
-        ? combined.filter((meal) => meal.strMeal.toLowerCase().includes(search.toLowerCase()))
-        : combined
-
-      setRecipes(filteredBySearch)
-      return
-    }
-
-    const singleFilterData = category
-      ? await getByCategory(category)
-      : await getByCuisine(cuisine)
-
-    const filteredBySearch = search
-      ? singleFilterData.filter((meal) => meal.strMeal.toLowerCase().includes(search.toLowerCase()))
-      : singleFilterData
-
-    setRecipes(filteredBySearch)
   }
 
   const handleSearch = (value) => {
@@ -112,8 +116,21 @@ export default function Home() {
         ))}
       </div>
 
-      {recipes.length === 0 && (
+      {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
+
+      {!loading && recipes.length === 0 && (
         <p className="mt-4 text-sm text-slate-500">No recipes found for this filter combination.</p>
+      )}
+
+      {loading && <p className="mt-4 text-sm text-slate-500">Loading recipes...</p>}
+
+      {!loading && recipes.length < total && (
+        <button
+          onClick={() => loadRecipes({ page: page + 1, append: true })}
+          className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white"
+        >
+          Load more recipes
+        </button>
       )}
     </div>
   )

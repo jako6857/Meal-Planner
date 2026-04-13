@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { supabase } from "../lib/supabase"
 import { normalizeMeal } from "../lib/normalizeMeal"
+import { getMealById } from "../lib/mealsApi"
 
 export default function RecipeDetail() {
   const { id } = useParams()
@@ -15,11 +16,8 @@ export default function RecipeDetail() {
   
   useEffect(() => {
     const load = async () => {
-      const res = await fetch(
-        `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`
-      )
-      const data = await res.json()
-      setRecipe(data.meals?.[0])
+      const meal = await getMealById(id)
+      setRecipe(meal)
     }
 
     load()

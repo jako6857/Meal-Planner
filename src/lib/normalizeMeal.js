@@ -1,6 +1,19 @@
 export function normalizeMeal(meal) {
   if (!meal) return { ingredients: [] }
 
+  if (Array.isArray(meal.ingredients) && meal.ingredients.length > 0) {
+    return {
+      id: meal.idMeal,
+      title: meal.strMeal,
+      image: meal.strMealThumb,
+      instructions: meal.strInstructions,
+      ingredients: meal.ingredients.map((item) => ({
+        name: item.name?.trim().toLowerCase() || "",
+        measure: item.measure?.trim() || "",
+      })).filter((item) => item.name),
+    }
+  }
+
   const ingredients = []
 
   for (let i = 1; i <= 20; i++) {
