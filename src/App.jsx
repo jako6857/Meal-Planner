@@ -11,10 +11,8 @@ import BottomNav from "./components/BottomNav.jsx"
 function App() {
   return (
     <BrowserRouter>
-      <div className="pb-20 bg-gray-50 min-h-screen">
-
-        {/* MAIN CONTENT */}
-        <div className="p-4">
+      <div className="min-h-screen bg-slate-50 text-slate-900">
+        <main className="mx-auto w-full max-w-5xl px-3 pt-3 pb-28 sm:px-4 sm:pt-4">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/meal-prep" element={<MealPrep />} />
@@ -22,11 +20,9 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/recipe/:id" element={<RecipeDetail />} />
           </Routes>
-        </div>
+        </main>
 
-        {/* BOTTOM NAV */}
         <BottomNav />
-
       </div>
     </BrowserRouter>
   )

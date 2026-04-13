@@ -2,12 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background: #f9fafb;
-  font-family: system-ui, -apple-system, sans-serif;
+html,
+body,
+#root {
+  min-height: 100%;
 }
 
-/* make buttons feel more app-like */
+body {
+  margin: 0;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
 button {
   transition: all 0.2s ease;
 }

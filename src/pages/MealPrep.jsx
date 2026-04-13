@@ -26,8 +26,8 @@ export default function MealPrep() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">
+    <div className="mx-auto max-w-2xl px-1 pb-2">
+      <h1 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">
         Meal Prep
       </h1>
 
@@ -36,26 +36,25 @@ export default function MealPrep() {
           const meal = getMeal(day)
 
           return (
-            <div key={day} className="bg-white p-4 rounded-xl shadow">
-              <h2 className="font-semibold mb-2">{day}</h2>
+            <div key={day} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <h2 className="mb-2 font-semibold text-slate-900">{day}</h2>
 
               {meal ? (
                 <>
-                  <img src={meal.image} className="rounded mb-2" />
+                  <img src={meal.image} alt={meal.title} className="mb-3 h-40 w-full rounded-xl object-cover" />
 
-                  <p className="mb-2">{meal.title}</p>
+                  <p className="mb-2 text-sm text-slate-700">{meal.title}</p>
 
-                  {/* 🔥 FIXED: only pass ID */}
                   <Link
                     to={`/recipe/${meal.recipe_id}`}
-                    className="text-blue-500 block mb-2"
+                    className="mb-2 block text-sm font-medium text-blue-600"
                   >
                     View Details
                   </Link>
 
                   <button
                     onClick={() => removeMeal(day)}
-                    className="text-red-500"
+                    className="rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600"
                   >
                     Remove
                   </button>
@@ -63,7 +62,7 @@ export default function MealPrep() {
               ) : (
                 <Link
                   to="/"
-                  className="text-blue-500"
+                  className="text-sm font-medium text-blue-600"
                 >
                   + Add Meal
                 </Link>

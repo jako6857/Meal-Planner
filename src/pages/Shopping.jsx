@@ -43,13 +43,13 @@ export default function Shopping() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">
+    <div className="mx-auto max-w-2xl px-1 pb-2">
+      <h1 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">
         Shopping List
       </h1>
 
       {items.length === 0 && (
-        <p className="text-gray-500">
+        <p className="text-sm text-slate-500">
           No ingredients found — check console log
         </p>
       )}
@@ -58,13 +58,13 @@ export default function Shopping() {
         {items.map((item) => (
           <div
             key={item.name}
-            className="bg-white p-3 rounded-xl shadow"
+            className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
           >
-            <p className="font-semibold capitalize">
+            <p className="font-semibold capitalize text-slate-900">
               {item.name}
             </p>
 
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-slate-500">
               {item.measure.join(", ")}
             </p>
           </div>
