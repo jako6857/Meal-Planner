@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
-import { Home, Calendar, ShoppingCart, User } from "lucide-react"
+import { Home, Calendar, ShoppingCart, User, SquarePen } from "lucide-react"
 
 export default function BottomNav() {
   const location = useLocation()
@@ -27,6 +27,11 @@ export default function BottomNav() {
         <Link to="/shopping" className={`flex min-w-[64px] flex-col items-center rounded-xl px-2 py-1 ${tab("/shopping")}`}>
           <ShoppingCart size={20} />
           <span className="text-[11px]">Shop</span>
+        </Link>
+
+        <Link to="/create-recipe" className={`flex min-w-[64px] flex-col items-center rounded-xl px-2 py-1 ${tab("/create-recipe")}`}>
+          <SquarePen size={20} />
+          <span className="text-[11px]">Create</span>
         </Link>
 
         <Link to="/profile" className={`flex min-w-[64px] flex-col items-center rounded-xl px-2 py-1 ${tab("/profile")}`}>

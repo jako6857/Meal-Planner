@@ -9,6 +9,8 @@ Mobile-first meal planner built with React, Vite, Tailwind, and Supabase.
 - Recipe queries are `Supabase-first` with TheMealDB fallback
 - Recipe details fetch through the shared API layer
 - Added one-time bulk import script to fill Supabase with many recipes
+- Added in-app auth (sign up, sign in, sign out)
+- Added a Create Recipe screen for logged-in users that saves directly to Supabase
 
 ## Setup
 
@@ -31,6 +33,12 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 Run SQL from `supabase/recipes.sql` in the Supabase SQL editor.
 
+This adds:
+
+- `user_id` ownership for custom recipes
+- RLS policies so only authenticated users can create/update/delete their own recipes
+- Public read access so everyone can browse recipes
+
 ### 3) Import many recipes
 
 ```bash
@@ -51,3 +59,4 @@ npm run dev
 - Home page reads from `public.recipes` with server-side filtering and paging.
 - If the table is empty or unavailable, the app falls back to TheMealDB automatically.
 - Since data is local in Supabase after import, you get more recipes and fewer external API calls during normal use.
+- Users can create their own recipes in-app from the Create tab after signing in on the Profile tab.
