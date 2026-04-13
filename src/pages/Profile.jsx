@@ -2,6 +2,7 @@ import { useState } from "react"
 import { supabase } from "../lib/supabase"
 
 export default function Profile({ user }) {
+  const [authMode, setAuthMode] = useState("signin")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [message, setMessage] = useState("")
@@ -96,6 +97,12 @@ export default function Profile({ user }) {
     setMessage("Signed out.")
   }
 
+  const switchMode = (mode) => {
+    setAuthMode(mode)
+    setMessage("")
+    setError("")
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-1 pb-2">
       <h1 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">Profile</h1>
@@ -113,7 +120,11 @@ export default function Profile({ user }) {
           </>
         ) : (
           <>
-            <p className="mb-3 text-sm text-slate-600">Create an account or sign in to add your own recipes.</p>
+            <p className="mb-3 text-sm text-slate-600">
+              {authMode === "signin"
+                ? "Sign in to add your own recipes."
+                : "Create your account to start adding recipes."}
+            </p>
 
             <div className="space-y-3">
               <input
@@ -132,22 +143,45 @@ export default function Profile({ user }) {
               />
             </div>
 
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={signIn}
-                disabled={loading || !normalizedEmail || !password}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                Sign in
-              </button>
-              <button
-                onClick={signUp}
-                disabled={loading || !normalizedEmail || !password}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
-              >
-                Sign up
-              </button>
-            </div>
+            {authMode === "signin" ? (
+              <>
+                <button
+                  onClick={signIn}
+                  disabled={loading || !normalizedEmail || !password}
+                  className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  Sign in
+                </button>
+
+                <p className="mt-4 text-sm text-slate-600">If you do not have an account, please click here to register.</p>
+
+                <button
+                  onClick={() => switchMode("signup")}
+                  className="mt-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+                >
+                  Go to register
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={signUp}
+                  disabled={loading || !normalizedEmail || !password}
+                  className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  Create account
+                </button>
+
+                <p className="mt-4 text-sm text-slate-600">Already have an account?</p>
+
+                <button
+                  onClick={() => switchMode("signin")}
+                  className="mt-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+                >
+                  Back to sign in
+                </button>
+              </>
+            )}
 
             {isConfirmationPending && normalizedEmail && (
               <button
