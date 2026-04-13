@@ -8,6 +8,12 @@ export default function Profile({ user }) {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
+  const normalizedEmail = email.trim().toLowerCase()
+
+  const isConfirmationPending =
+    error.toLowerCase().includes("email not confirmed") ||
+    message.toLowerCase().includes("confirmation")
+
   const signUp = async () => {
     try {
       setLoading(true)
@@ -15,7 +21,7 @@ export default function Profile({ user }) {
       setMessage("")
 
       const { error: signUpError } = await supabase.auth.signUp({
-        email,
+        email: normalizedEmail,
         password,
       })
 
@@ -23,7 +29,7 @@ export default function Profile({ user }) {
         throw signUpError
       }
 
-      setMessage("Account created. Check your email if confirmation is enabled.")
+      setMessage("Account created. Check your inbox and confirm your email before signing in.")
     } catch (err) {
       setError(err.message)
     } finally {
@@ -38,7 +44,7 @@ export default function Profile({ user }) {
       setMessage("")
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
+        email: normalizedEmail,
         password,
       })
 
@@ -47,6 +53,33 @@ export default function Profile({ user }) {
       }
 
       setMessage("Signed in successfully.")
+    } catch (err) {
+      if (err.message?.toLowerCase().includes("email not confirmed")) {
+        setError("Email not confirmed. Please confirm via email, then try again.")
+      } else {
+        setError(err.message)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resendConfirmation = async () => {
+    try {
+      setLoading(true)
+      setError("")
+      setMessage("")
+
+      const { error: resendError } = await supabase.auth.resend({
+        type: "signup",
+        email: normalizedEmail,
+      })
+
+      if (resendError) {
+        throw resendError
+      }
+
+      setMessage("Confirmation email sent. Check spam/junk if you do not see it.")
     } catch (err) {
       setError(err.message)
     } finally {
@@ -102,19 +135,29 @@ export default function Profile({ user }) {
             <div className="mt-4 flex gap-2">
               <button
                 onClick={signIn}
-                disabled={loading || !email || !password}
+                disabled={loading || !normalizedEmail || !password}
                 className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
                 Sign in
               </button>
               <button
                 onClick={signUp}
-                disabled={loading || !email || !password}
+                disabled={loading || !normalizedEmail || !password}
                 className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
               >
                 Sign up
               </button>
             </div>
+
+            {isConfirmationPending && normalizedEmail && (
+              <button
+                onClick={resendConfirmation}
+                disabled={loading}
+                className="mt-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50"
+              >
+                Resend confirmation email
+              </button>
+            )}
           </>
         )}
 
