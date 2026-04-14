@@ -11,6 +11,7 @@ import CreateRecipe from "./pages/CreateRecipe.jsx"
 import BottomNav from "./components/BottomNav.jsx"
 import { supabase } from "./lib/supabase"
 import { readSettings, saveSettings } from "./lib/settings"
+import { syncPendingLikes } from "./lib/likes"
 
 function App() {
   const [user, setUser] = useState(null)
@@ -52,6 +53,23 @@ function App() {
       root.classList.remove("reduce-motion")
     }
   }, [settings])
+
+  useEffect(() => {
+    if (!user?.id) {
+      return
+    }
+
+    void syncPendingLikes(user.id)
+
+    const onOnline = () => {
+      void syncPendingLikes(user.id)
+    }
+
+    window.addEventListener("online", onOnline)
+    return () => {
+      window.removeEventListener("online", onOnline)
+    }
+  }, [user?.id])
 
   const updateSettings = (next) => {
     setSettings((prev) => ({ ...prev, ...next }))

@@ -70,3 +70,4 @@ npm run dev
 - Since data is local in Supabase after import, you get more recipes and fewer external API calls during normal use.
 - Users can create their own recipes in-app from the Create tab after signing in on the Profile tab.
 - Logged-in users can save/unsave recipes with hearts, and see them under Profile -> Saved Recipes.
+- Likes are offline-first: heart changes are applied locally when offline and auto-sync to Supabase when the device reconnects.
