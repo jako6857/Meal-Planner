@@ -10,9 +10,11 @@ import CreateRecipe from "./pages/CreateRecipe.jsx"
 
 import BottomNav from "./components/BottomNav.jsx"
 import { supabase } from "./lib/supabase"
+import { readSettings, saveSettings } from "./lib/settings"
 
 function App() {
   const [user, setUser] = useState(null)
+  const [settings, setSettings] = useState(() => readSettings())
 
   useEffect(() => {
     const init = async () => {
@@ -31,21 +33,48 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    saveSettings(settings)
+
+    const root = document.documentElement
+    root.setAttribute("data-theme", settings.theme)
+    root.setAttribute("lang", settings.language === "da" ? "da" : "en")
+
+    if (settings.textSize === "large") {
+      root.classList.add("text-size-large")
+    } else {
+      root.classList.remove("text-size-large")
+    }
+
+    if (settings.motion === "reduced") {
+      root.classList.add("reduce-motion")
+    } else {
+      root.classList.remove("reduce-motion")
+    }
+  }, [settings])
+
+  const updateSettings = (next) => {
+    setSettings((prev) => ({ ...prev, ...next }))
+  }
+
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-slate-50 text-slate-900">
         <main className="mx-auto w-full max-w-5xl px-3 pt-3 pb-28 sm:px-4 sm:pt-4">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/meal-prep" element={<MealPrep />} />
-            <Route path="/shopping" element={<Shopping />} />
-            <Route path="/create-recipe" element={<CreateRecipe user={user} />} />
-            <Route path="/profile" element={<Profile user={user} />} />
-            <Route path="/recipe/:id" element={<RecipeDetail />} />
+            <Route path="/" element={<Home language={settings.language} />} />
+            <Route path="/meal-prep" element={<MealPrep language={settings.language} />} />
+            <Route path="/shopping" element={<Shopping language={settings.language} />} />
+            <Route path="/create-recipe" element={<CreateRecipe user={user} language={settings.language} />} />
+            <Route
+              path="/profile"
+              element={<Profile user={user} settings={settings} onUpdateSettings={updateSettings} />}
+            />
+            <Route path="/recipe/:id" element={<RecipeDetail language={settings.language} />} />
           </Routes>
         </main>
 
-        <BottomNav />
+        <BottomNav language={settings.language} />
       </div>
     </BrowserRouter>
   )

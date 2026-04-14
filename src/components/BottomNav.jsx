@@ -1,14 +1,30 @@
 import { Link, useLocation } from "react-router-dom"
 import { Home, Calendar, ShoppingCart, User, SquarePen } from "lucide-react"
 
-export default function BottomNav() {
+const labels = {
+  en: {
+    home: "Home",
+    meals: "Meals",
+    shop: "Shop",
+    create: "Create",
+    profile: "Profile",
+  },
+  da: {
+    home: "Hjem",
+    meals: "Maaltider",
+    shop: "Indkob",
+    create: "Opret",
+    profile: "Profil",
+  },
+}
+
+export default function BottomNav({ language = "en" }) {
   const location = useLocation()
+  const t = labels[language] || labels.en
 
   const tab = (path) => {
     const isActive = location.pathname === path
-    return isActive
-      ? "text-blue-600 bg-blue-50"
-      : "text-slate-500"
+    return isActive ? "text-blue-600 bg-blue-50" : "text-slate-500"
   }
 
   return (
@@ -16,27 +32,27 @@ export default function BottomNav() {
       <nav className="mx-auto flex w-full max-w-md items-center justify-around rounded-2xl border border-slate-200 bg-white/95 px-2 py-2 shadow-[0_-6px_22px_rgba(15,23,42,0.12)] backdrop-blur">
         <Link to="/" className={`flex min-w-[64px] flex-col items-center rounded-xl px-2 py-1 ${tab("/")}`}>
           <Home size={20} />
-          <span className="text-[11px]">Home</span>
+          <span className="text-[11px]">{t.home}</span>
         </Link>
 
         <Link to="/meal-prep" className={`flex min-w-[64px] flex-col items-center rounded-xl px-2 py-1 ${tab("/meal-prep")}`}>
           <Calendar size={20} />
-          <span className="text-[11px]">Meals</span>
+          <span className="text-[11px]">{t.meals}</span>
         </Link>
 
         <Link to="/shopping" className={`flex min-w-[64px] flex-col items-center rounded-xl px-2 py-1 ${tab("/shopping")}`}>
           <ShoppingCart size={20} />
-          <span className="text-[11px]">Shop</span>
+          <span className="text-[11px]">{t.shop}</span>
         </Link>
 
         <Link to="/create-recipe" className={`flex min-w-[64px] flex-col items-center rounded-xl px-2 py-1 ${tab("/create-recipe")}`}>
           <SquarePen size={20} />
-          <span className="text-[11px]">Create</span>
+          <span className="text-[11px]">{t.create}</span>
         </Link>
 
         <Link to="/profile" className={`flex min-w-[64px] flex-col items-center rounded-xl px-2 py-1 ${tab("/profile")}`}>
           <User size={20} />
-          <span className="text-[11px]">Profile</span>
+          <span className="text-[11px]">{t.profile}</span>
         </Link>
       </nav>
     </div>

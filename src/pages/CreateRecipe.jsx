@@ -18,7 +18,54 @@ const parseIngredients = (text) =>
     })
     .filter((item) => item.name)
 
-export default function CreateRecipe({ user }) {
+const copy = {
+  en: {
+    title: "Create Recipe",
+    signInFirst: "Please sign in first to add your own recipes.",
+    goSignIn: "Go to Sign in",
+    recipeTitle: "Recipe title",
+    category: "Category (e.g. Breakfast)",
+    cuisine: "Cuisine (e.g. American)",
+    recipeImage: "Recipe image",
+    chooseGallery: "Choose from gallery",
+    takePhoto: "Take photo",
+    uploading: "Uploading image...",
+    manualImage: "Or paste image URL manually",
+    instructions: "How to make it",
+    ingredients: "Ingredients (one per line)\nEggs - 2\nMilk - 200 ml",
+    saving: "Saving...",
+    saveRecipe: "Save Recipe",
+    mustSignIn: "You must be signed in to create recipes.",
+    invalidImage: "Please choose a valid image file.",
+    uploadFailedPrefix: "Image upload failed:",
+    uploadFailedSuffix: "Ensure storage bucket 'recipe-images' exists and allows uploads for authenticated users.",
+    previewAlt: "Recipe preview",
+  },
+  da: {
+    title: "Opret opskrift",
+    signInFirst: "Log ind foerst for at tilfoeje dine egne opskrifter.",
+    goSignIn: "Gaa til log ind",
+    recipeTitle: "Opskriftstitel",
+    category: "Kategori (fx Morgenmad)",
+    cuisine: "Koekken (fx Amerikansk)",
+    recipeImage: "Opskriftsbillede",
+    chooseGallery: "Vaelg fra galleri",
+    takePhoto: "Tag billede",
+    uploading: "Uploader billede...",
+    manualImage: "Eller indsaat billed-URL manuelt",
+    instructions: "Saadan laver du den",
+    ingredients: "Ingredienser (en per linje)\nAeg - 2\nMaelk - 200 ml",
+    saving: "Gemmer...",
+    saveRecipe: "Gem opskrift",
+    mustSignIn: "Du skal vaere logget ind for at oprette opskrifter.",
+    invalidImage: "Vaelg en gyldig billedfil.",
+    uploadFailedPrefix: "Upload af billede fejlede:",
+    uploadFailedSuffix: "Soerg for at storage-bucket 'recipe-images' findes og tillader upload for loggede brugere.",
+    previewAlt: "Forhaandsvisning af opskrift",
+  },
+}
+
+export default function CreateRecipe({ user, language = "en" }) {
   const navigate = useNavigate()
   const galleryInputRef = useRef(null)
   const cameraInputRef = useRef(null)
@@ -32,6 +79,7 @@ export default function CreateRecipe({ user }) {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const t = copy[language] || copy.en
 
   const uploadImageFile = async (file) => {
     if (!file) {
@@ -39,7 +87,7 @@ export default function CreateRecipe({ user }) {
     }
 
     if (!file.type.startsWith("image/")) {
-      setError("Please choose a valid image file.")
+      setError(t.invalidImage)
       return
     }
 
@@ -65,7 +113,7 @@ export default function CreateRecipe({ user }) {
       setImage(data.publicUrl)
     } catch (err) {
       setError(
-        `Image upload failed: ${err.message}. Ensure storage bucket '${RECIPE_IMAGE_BUCKET}' exists and allows uploads for authenticated users.`
+        `${t.uploadFailedPrefix} ${err.message}. ${t.uploadFailedSuffix}`
       )
     } finally {
       setUploadingImage(false)
@@ -90,7 +138,7 @@ export default function CreateRecipe({ user }) {
     e.preventDefault()
 
     if (!user) {
-      setError("You must be signed in to create recipes.")
+      setError(t.mustSignIn)
       return
     }
 
@@ -124,11 +172,11 @@ export default function CreateRecipe({ user }) {
   if (!user) {
     return (
       <div className="mx-auto max-w-2xl px-1 pb-2">
-        <h1 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">Create Recipe</h1>
+        <h1 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">{t.title}</h1>
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-600">Please sign in first to add your own recipes.</p>
+          <p className="text-sm text-slate-600">{t.signInFirst}</p>
           <Link to="/profile" className="mt-3 inline-block text-sm font-semibold text-blue-600">
-            Go to Sign in
+            {t.goSignIn}
           </Link>
         </div>
       </div>
@@ -137,14 +185,14 @@ export default function CreateRecipe({ user }) {
 
   return (
     <div className="mx-auto max-w-2xl px-1 pb-2">
-      <h1 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">Create Recipe</h1>
+      <h1 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">{t.title}</h1>
 
       <form onSubmit={submit} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="w-full rounded-lg border border-slate-200 px-3 py-2"
-          placeholder="Recipe title"
+          placeholder={t.recipeTitle}
           required
         />
 
@@ -153,18 +201,18 @@ export default function CreateRecipe({ user }) {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-lg border border-slate-200 px-3 py-2"
-            placeholder="Category (e.g. Breakfast)"
+            placeholder={t.category}
           />
           <input
             value={cuisine}
             onChange={(e) => setCuisine(e.target.value)}
             className="w-full rounded-lg border border-slate-200 px-3 py-2"
-            placeholder="Cuisine (e.g. American)"
+            placeholder={t.cuisine}
           />
         </div>
 
         <div className="rounded-xl border border-slate-200 p-3">
-          <p className="mb-2 text-sm font-semibold text-slate-700">Recipe image</p>
+          <p className="mb-2 text-sm font-semibold text-slate-700">{t.recipeImage}</p>
 
           <div className="flex flex-wrap gap-2">
             <button
@@ -173,7 +221,7 @@ export default function CreateRecipe({ user }) {
               disabled={uploadingImage}
               className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
             >
-              Choose from gallery
+              {t.chooseGallery}
             </button>
 
             <button
@@ -182,7 +230,7 @@ export default function CreateRecipe({ user }) {
               disabled={uploadingImage}
               className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
             >
-              Take photo
+              {t.takePhoto}
             </button>
           </div>
 
@@ -203,11 +251,11 @@ export default function CreateRecipe({ user }) {
             className="hidden"
           />
 
-          {uploadingImage && <p className="mt-2 text-sm text-slate-500">Uploading image...</p>}
+          {uploadingImage && <p className="mt-2 text-sm text-slate-500">{t.uploading}</p>}
 
           {image && (
             <div className="mt-3">
-              <img src={image} alt="Recipe preview" className="h-40 w-full rounded-lg object-cover" />
+              <img src={image} alt={t.previewAlt} className="h-40 w-full rounded-lg object-cover" />
             </div>
           )}
 
@@ -215,7 +263,7 @@ export default function CreateRecipe({ user }) {
             value={image}
             onChange={(e) => setImage(e.target.value)}
             className="mt-3 w-full rounded-lg border border-slate-200 px-3 py-2"
-            placeholder="Or paste image URL manually"
+            placeholder={t.manualImage}
           />
         </div>
 
@@ -223,14 +271,14 @@ export default function CreateRecipe({ user }) {
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
           className="min-h-28 w-full rounded-lg border border-slate-200 px-3 py-2"
-          placeholder="How to make it"
+          placeholder={t.instructions}
         />
 
         <textarea
           value={ingredientsText}
           onChange={(e) => setIngredientsText(e.target.value)}
           className="min-h-32 w-full rounded-lg border border-slate-200 px-3 py-2"
-          placeholder={"Ingredients (one per line)\nEggs - 2\nMilk - 200 ml"}
+          placeholder={t.ingredients}
         />
 
         {error && <p className="text-sm text-red-600">{error}</p>}
@@ -240,7 +288,7 @@ export default function CreateRecipe({ user }) {
           disabled={loading || uploadingImage}
           className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {loading ? "Saving..." : "Save Recipe"}
+          {loading ? t.saving : t.saveRecipe}
         </button>
       </form>
     </div>

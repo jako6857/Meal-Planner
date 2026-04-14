@@ -16,10 +16,49 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+html[data-theme="dark"] body {
+  background: #020617;
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] .bg-slate-50 {
+  background-color: #020617 !important;
+}
+
+html[data-theme="dark"] .bg-white,
+html[data-theme="dark"] .bg-white\/95 {
+  background-color: #0f172a !important;
+}
+
+html[data-theme="dark"] .text-slate-900,
+html[data-theme="dark"] .text-slate-800,
+html[data-theme="dark"] .text-slate-700,
+html[data-theme="dark"] .text-slate-600,
+html[data-theme="dark"] .text-slate-500 {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .border-slate-200,
+html[data-theme="dark"] .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+html.text-size-large body {
+  font-size: 17px;
+}
+
 button {
   transition: all 0.2s ease;
 }
 
 button:active {
   transform: scale(0.97);
+}
+
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation: none !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }

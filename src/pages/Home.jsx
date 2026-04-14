@@ -4,7 +4,51 @@ import { Link } from "react-router-dom"
 
 const PAGE_SIZE = 20
 
-export default function Home() {
+const CATEGORY_OPTIONS = [
+  { value: "", en: "All", da: "Alle" },
+  { value: "Breakfast", en: "Breakfast", da: "Morgenmad" },
+  { value: "Dessert", en: "Dessert", da: "Dessert" },
+  { value: "Seafood", en: "Seafood", da: "Fisk og skaldyr" },
+  { value: "Chicken", en: "Chicken", da: "Kylling" },
+  { value: "Vegetarian", en: "Vegetarian", da: "Vegetarisk" },
+]
+
+const CUISINE_OPTIONS = [
+  { value: "", en: "All cuisines", da: "Alle koekkener" },
+  { value: "Italian", en: "Italian", da: "Italiensk" },
+  { value: "Mexican", en: "Mexican", da: "Mexicansk" },
+  { value: "American", en: "American", da: "Amerikansk" },
+  { value: "Japanese", en: "Japanese", da: "Japansk" },
+]
+
+const copy = {
+  en: {
+    title: "Recipes",
+    searchPlaceholder: "Search recipes...",
+    ownRecipes: "Own Recipes",
+    all: "All",
+    allCuisines: "All cuisines",
+    noRecipes: "No recipes found for this filter combination.",
+    loading: "Loading recipes...",
+    supabaseOnly: "Showing recipes from your Supabase database only.",
+    loadMore: "Load more recipes",
+    failedLoad: "Failed to load recipes",
+  },
+  da: {
+    title: "Opskrifter",
+    searchPlaceholder: "Soeg opskrifter...",
+    ownRecipes: "Egne opskrifter",
+    all: "Alle",
+    allCuisines: "Alle koekkener",
+    noRecipes: "Ingen opskrifter fundet for denne filterkombination.",
+    loading: "Indlaeser opskrifter...",
+    supabaseOnly: "Viser kun opskrifter fra din Supabase-database.",
+    loadMore: "Indlaes flere opskrifter",
+    failedLoad: "Kunne ikke indlaese opskrifter",
+  },
+}
+
+export default function Home({ language = "en" }) {
   const [recipes, setRecipes] = useState([])
   const [search, setSearch] = useState("")
   const [category, setCategory] = useState("")
@@ -14,6 +58,7 @@ export default function Home() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const t = copy[language] || copy.en
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -41,7 +86,7 @@ export default function Home() {
       setPage(nextPage)
       setRecipes((prev) => (append ? [...prev, ...result.items] : result.items))
     } catch (err) {
-      setError(err.message || "Failed to load recipes")
+      setError(err.message || t.failedLoad)
       if (!append) {
         setRecipes([])
         setTotal(0)
@@ -66,11 +111,11 @@ export default function Home() {
 
   return (
     <div className="mx-auto max-w-5xl px-1 pb-2">
-      <h1 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">Recipes</h1>
+      <h1 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">{t.title}</h1>
 
       <input
         className="mb-4 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[15px] shadow-sm outline-none focus:border-blue-400"
-        placeholder="Search recipes..."
+        placeholder={t.searchPlaceholder}
         value={search}
         onChange={(e) => handleSearch(e.target.value)}
       />
@@ -82,32 +127,32 @@ export default function Home() {
             source === "own" ? "bg-emerald-600 text-white" : "bg-white text-slate-700 border border-slate-200"
           }`}
         >
-          Own Recipes
+          {t.ownRecipes}
         </button>
 
-        {["", "Breakfast", "Dessert", "Seafood", "Chicken", "Vegetarian"].map((c) => (
+        {CATEGORY_OPTIONS.map((option) => (
           <button
-            key={c}
-            onClick={() => handleCategory(c)}
+            key={option.value || "all"}
+            onClick={() => handleCategory(option.value)}
             className={`rounded-full px-3 py-1.5 text-sm ${
-              category === c ? "bg-blue-600 text-white" : "bg-white text-slate-700 border border-slate-200"
+              category === option.value ? "bg-blue-600 text-white" : "bg-white text-slate-700 border border-slate-200"
             }`}
           >
-            {c || "All"}
+            {language === "da" ? option.da : option.en}
           </button>
         ))}
       </div>
 
       <div className="mb-5 flex flex-wrap gap-2">
-        {["", "Italian", "Mexican", "American", "Japanese"].map((c) => (
+        {CUISINE_OPTIONS.map((option) => (
           <button
-            key={c}
-            onClick={() => handleCuisine(c)}
+            key={option.value || "all-cuisines"}
+            onClick={() => handleCuisine(option.value)}
             className={`rounded-full px-3 py-1.5 text-sm ${
-              cuisine === c ? "bg-blue-600 text-white" : "bg-white text-slate-700 border border-slate-200"
+              cuisine === option.value ? "bg-blue-600 text-white" : "bg-white text-slate-700 border border-slate-200"
             }`}
           >
-            {c || "All cuisines"}
+            {language === "da" ? option.da : option.en}
           </button>
         ))}
       </div>
@@ -130,13 +175,13 @@ export default function Home() {
       {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
 
       {!loading && recipes.length === 0 && (
-        <p className="mt-4 text-sm text-slate-500">No recipes found for this filter combination.</p>
+        <p className="mt-4 text-sm text-slate-500">{t.noRecipes}</p>
       )}
 
-      {loading && <p className="mt-4 text-sm text-slate-500">Loading recipes...</p>}
+      {loading && <p className="mt-4 text-sm text-slate-500">{t.loading}</p>}
 
       {source === "own" && !loading && (
-        <p className="mt-2 text-xs text-slate-500">Showing recipes from your Supabase database only.</p>
+        <p className="mt-2 text-xs text-slate-500">{t.supabaseOnly}</p>
       )}
 
       {!loading && recipes.length < total && (
@@ -144,7 +189,7 @@ export default function Home() {
           onClick={() => loadRecipes({ page: page + 1, append: true })}
           className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white"
         >
-          Load more recipes
+          {t.loadMore}
         </button>
       )}
     </div>

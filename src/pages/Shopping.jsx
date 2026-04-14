@@ -1,8 +1,20 @@
 import React, { useEffect, useState } from "react"
 import { supabase } from "../lib/supabase"
 
-export default function Shopping() {
+const copy = {
+  en: {
+    title: "Shopping List",
+    empty: "No ingredients found yet. Add meals to your plan first.",
+  },
+  da: {
+    title: "Indkoebsliste",
+    empty: "Ingen ingredienser endnu. Tilfoej foerst maaltider til din plan.",
+  },
+}
+
+export default function Shopping({ language = "en" }) {
   const [items, setItems] = useState([])
+  const t = copy[language] || copy.en
 
   useEffect(() => {
     load()
@@ -45,12 +57,12 @@ export default function Shopping() {
   return (
     <div className="mx-auto max-w-2xl px-1 pb-2">
       <h1 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">
-        Shopping List
+        {t.title}
       </h1>
 
       {items.length === 0 && (
         <p className="text-sm text-slate-500">
-          No ingredients found — check console log
+          {t.empty}
         </p>
       )}
 
