@@ -1,6 +1,47 @@
 import { supabase } from "./supabase"
 
 const API_BASE = "https://www.themealdb.com/api/json/v1/1"
+const RECIPES_CACHE_KEY = "recipes-cache:v1"
+
+const readRecipesCache = () => {
+  try {
+    const raw = localStorage.getItem(RECIPES_CACHE_KEY)
+    if (!raw) {
+      return []
+    }
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+const writeRecipesCache = (items) => {
+  try {
+    localStorage.setItem(RECIPES_CACHE_KEY, JSON.stringify(items))
+  } catch {
+    // Ignore storage write failures.
+  }
+}
+
+const filterCachedMeals = ({ meals, query = "", category = "", cuisine = "" }) => {
+  const q = query.trim().toLowerCase()
+
+  return meals.filter((meal) => {
+    const matchQuery = q ? (meal.strMeal || "").toLowerCase().includes(q) : true
+    const matchCategory = category ? meal.strCategory === category : true
+    const matchCuisine = cuisine ? meal.strArea === cuisine : true
+    return matchQuery && matchCategory && matchCuisine
+  })
+}
+
+const paged = (items, page, pageSize) => {
+  const from = (page - 1) * pageSize
+  return {
+    items: items.slice(from, from + pageSize),
+    total: items.length,
+  }
+}
 
 const toMealShape = (row) => ({
   idMeal: row.id,
@@ -150,9 +191,15 @@ const fallbackFromExternalApi = async ({ query = "", category = "", cuisine = ""
 export const searchMeals = async ({ query = "", category = "", cuisine = "", page = 1, pageSize = 20, source = "all" }) => {
   if (source === "own") {
     try {
-      return await querySupabaseRecipes({ query, category, cuisine, page, pageSize })
+      const result = await querySupabaseRecipes({ query, category, cuisine, page, pageSize })
+      const cached = readRecipesCache()
+      const existing = new Map(cached.map((meal) => [meal.idMeal, meal]))
+      result.items.forEach((meal) => existing.set(meal.idMeal, meal))
+      writeRecipesCache(Array.from(existing.values()))
+      return result
     } catch {
-      return { items: [], total: 0 }
+      const filtered = filterCachedMeals({ meals: readRecipesCache(), query, category, cuisine })
+      return paged(filtered, page, pageSize)
     }
   }
 
@@ -164,16 +211,24 @@ export const searchMeals = async ({ query = "", category = "", cuisine = "", pag
     ])
 
     const merged = uniqueById([...dbItems, ...externalItems])
-    const total = merged.length
-    const from = (page - 1) * pageSize
-    const items = merged.slice(from, from + pageSize)
+    writeRecipesCache(merged)
 
-    return { items, total }
+    return paged(merged, page, pageSize)
   } catch {
     // If Supabase table is missing or inaccessible, fall back to TheMealDB.
   }
 
-  return fallbackFromExternalApi({ query, category, cuisine, page, pageSize })
+  try {
+    const result = await fallbackFromExternalApi({ query, category, cuisine, page, pageSize })
+    const cached = readRecipesCache()
+    const existing = new Map(cached.map((meal) => [meal.idMeal, meal]))
+    result.items.forEach((meal) => existing.set(meal.idMeal, meal))
+    writeRecipesCache(Array.from(existing.values()))
+    return result
+  } catch {
+    const filtered = filterCachedMeals({ meals: readRecipesCache(), query, category, cuisine })
+    return paged(filtered, page, pageSize)
+  }
 }
 
 export const getMealById = async (id) => {

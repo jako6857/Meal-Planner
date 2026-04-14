@@ -12,6 +12,7 @@ import BottomNav from "./components/BottomNav.jsx"
 import { supabase } from "./lib/supabase"
 import { readSettings, saveSettings } from "./lib/settings"
 import { syncPendingLikes } from "./lib/likes"
+import { syncPendingMealPlans } from "./lib/mealPlans"
 
 function App() {
   const [user, setUser] = useState(null)
@@ -70,6 +71,19 @@ function App() {
       window.removeEventListener("online", onOnline)
     }
   }, [user?.id])
+
+  useEffect(() => {
+    void syncPendingMealPlans()
+
+    const onOnline = () => {
+      void syncPendingMealPlans()
+    }
+
+    window.addEventListener("online", onOnline)
+    return () => {
+      window.removeEventListener("online", onOnline)
+    }
+  }, [])
 
   const updateSettings = (next) => {
     setSettings((prev) => ({ ...prev, ...next }))

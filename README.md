@@ -71,3 +71,4 @@ npm run dev
 - Users can create their own recipes in-app from the Create tab after signing in on the Profile tab.
 - Logged-in users can save/unsave recipes with hearts, and see them under Profile -> Saved Recipes.
 - Likes are offline-first: heart changes are applied locally when offline and auto-sync to Supabase when the device reconnects.
+- Recipe browsing, meal plans, and shopping list are offline-first: data is cached locally and shown offline, with pending meal-plan updates syncing when back online.

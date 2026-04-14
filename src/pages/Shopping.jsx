@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { supabase } from "../lib/supabase"
+import { fetchMealPlans } from "../lib/mealPlans"
 
 const copy = {
   en: {
@@ -21,9 +21,7 @@ export default function Shopping({ language = "en" }) {
   }, [])
 
   const load = async () => {
-    const { data } = await supabase.from("meal_plans").select("*")
-
-    console.log("MEAL DATA:", data) 
+    const data = await fetchMealPlans()
 
     const ingredients = []
 

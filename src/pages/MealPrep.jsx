@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
-import { supabase } from "../lib/supabase"
 import { Link } from "react-router-dom"
+import { deleteMealPlan, fetchMealPlans } from "../lib/mealPlans"
 
 const copy = {
   en: {
@@ -46,12 +46,12 @@ export default function MealPrep({ language = "en" }) {
   }, [])
 
   const loadMeals = async () => {
-    const { data } = await supabase.from("meal_plans").select("*")
+    const data = await fetchMealPlans()
     setMeals(data || [])
   }
 
   const removeMeal = async (day) => {
-    await supabase.from("meal_plans").delete().eq("day", day)
+    await deleteMealPlan(day)
     loadMeals()
   }
 

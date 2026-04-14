@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { Heart } from "lucide-react"
-import { supabase } from "../lib/supabase"
 import { normalizeMeal } from "../lib/normalizeMeal"
 import { getMealById } from "../lib/mealsApi"
 import { fetchLikedRecipeIds, removeRecipeLike, saveRecipeLike } from "../lib/likes"
+import { upsertMealPlan } from "../lib/mealPlans"
 
 const copy = {
   en: {
@@ -113,22 +113,16 @@ export default function RecipeDetail({ language = "en", user }) {
 
   const addToDay = async (day) => {
     const clean = normalizeMeal(recipe)
-
-    console.log("NORMALIZED:", clean)
-
-    const { error } = await supabase.from("meal_plans").upsert(
-      {
+    try {
+      await upsertMealPlan({
         day,
         recipe_id: clean.id,
         title: clean.title,
         image: clean.image,
         ingredients: clean.ingredients,
-      },
-      { onConflict: "day" }
-    )
-
-    if (error) {
-      alert(error.message)
+      })
+    } catch (error) {
+      alert(error.message || "Failed to save meal plan")
       return
     }
 
