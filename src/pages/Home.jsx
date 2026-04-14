@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react"
 import { searchMeals } from "../lib/mealsApi"
 import { Link } from "react-router-dom"
+import { Heart } from "lucide-react"
+import { fetchLikedRecipeIds, removeRecipeLike, saveRecipeLike } from "../lib/likes"
 
 const PAGE_SIZE = 20
 
@@ -33,6 +35,8 @@ const copy = {
     supabaseOnly: "Showing recipes from your Supabase database only.",
     loadMore: "Load more recipes",
     failedLoad: "Failed to load recipes",
+    loginToSave: "Please sign in to save recipes.",
+    saveFailed: "Could not update saved recipes.",
   },
   da: {
     title: "Opskrifter",
@@ -45,10 +49,12 @@ const copy = {
     supabaseOnly: "Viser kun opskrifter fra din Supabase-database.",
     loadMore: "Indlæs flere opskrifter",
     failedLoad: "Kunne ikke indlæse opskrifter",
+    loginToSave: "Log ind for at gemme opskrifter.",
+    saveFailed: "Kunne ikke opdatere gemte opskrifter.",
   },
 }
 
-export default function Home({ language = "en" }) {
+export default function Home({ language = "en", user }) {
   const [recipes, setRecipes] = useState([])
   const [search, setSearch] = useState("")
   const [category, setCategory] = useState("")
@@ -58,7 +64,27 @@ export default function Home({ language = "en" }) {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [likedIds, setLikedIds] = useState(new Set())
+  const [togglingIds, setTogglingIds] = useState(new Set())
   const t = copy[language] || copy.en
+
+  useEffect(() => {
+    const loadLikes = async () => {
+      if (!user) {
+        setLikedIds(new Set())
+        return
+      }
+
+      try {
+        const ids = await fetchLikedRecipeIds(user.id)
+        setLikedIds(ids)
+      } catch {
+        setLikedIds(new Set())
+      }
+    }
+
+    loadLikes()
+  }, [user])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -107,6 +133,52 @@ export default function Home({ language = "en" }) {
 
   const handleCuisine = (c) => {
     setCuisine(c)
+  }
+
+  const toggleLike = async (event, recipe) => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    if (!user) {
+      setError(t.loginToSave)
+      return
+    }
+
+    const recipeId = recipe.idMeal
+    if (!recipeId) {
+      return
+    }
+
+    setTogglingIds((prev) => new Set(prev).add(recipeId))
+
+    try {
+      const isLiked = likedIds.has(recipeId)
+
+      if (isLiked) {
+        await removeRecipeLike({ userId: user.id, recipeId })
+        setLikedIds((prev) => {
+          const next = new Set(prev)
+          next.delete(recipeId)
+          return next
+        })
+      } else {
+        await saveRecipeLike({
+          userId: user.id,
+          recipeId,
+          title: recipe.strMeal || "Untitled recipe",
+          image: recipe.strMealThumb || null,
+        })
+        setLikedIds((prev) => new Set(prev).add(recipeId))
+      }
+    } catch {
+      setError(t.saveFailed)
+    } finally {
+      setTogglingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(recipeId)
+        return next
+      })
+    }
   }
 
   return (
@@ -164,7 +236,20 @@ export default function Home({ language = "en" }) {
             to={`/recipe/${recipe.idMeal}`}
             state={recipe}
           >
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
+              <button
+                type="button"
+                onClick={(event) => toggleLike(event, recipe)}
+                disabled={togglingIds.has(recipe.idMeal)}
+                className="absolute right-2 top-2 z-10 rounded-full border border-white/70 bg-white/45 p-1.5 backdrop-blur disabled:opacity-60"
+                aria-label="Toggle saved recipe"
+              >
+                <Heart
+                  size={18}
+                  className={likedIds.has(recipe.idMeal) ? "text-red-500" : "text-slate-700"}
+                  fill={likedIds.has(recipe.idMeal) ? "#ef4444" : "transparent"}
+                />
+              </button>
               <img src={recipe.strMealThumb} alt={recipe.strMeal} className="aspect-[4/3] w-full object-cover" />
               <h2 className="px-3 py-3 text-sm font-semibold leading-snug text-slate-800">{recipe.strMeal}</h2>
             </div>

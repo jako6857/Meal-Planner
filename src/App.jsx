@@ -62,7 +62,7 @@ function App() {
       <div className="min-h-screen bg-slate-50 text-slate-900">
         <main className="mx-auto w-full max-w-5xl px-3 pt-3 pb-28 sm:px-4 sm:pt-4">
           <Routes>
-            <Route path="/" element={<Home language={settings.language} />} />
+            <Route path="/" element={<Home language={settings.language} user={user} />} />
             <Route path="/meal-prep" element={<MealPrep language={settings.language} />} />
             <Route path="/shopping" element={<Shopping language={settings.language} />} />
             <Route path="/create-recipe" element={<CreateRecipe user={user} language={settings.language} />} />
@@ -70,7 +70,7 @@ function App() {
               path="/profile"
               element={<Profile user={user} settings={settings} onUpdateSettings={updateSettings} />}
             />
-            <Route path="/recipe/:id" element={<RecipeDetail language={settings.language} />} />
+            <Route path="/recipe/:id" element={<RecipeDetail language={settings.language} user={user} />} />
           </Routes>
         </main>
 

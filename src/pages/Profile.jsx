@@ -1,11 +1,15 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
+import { Heart } from "lucide-react"
 import { supabase } from "../lib/supabase"
+import { fetchSavedRecipes, removeRecipeLike } from "../lib/likes"
 
 const copy = {
   en: {
     title: "Profile",
     accountTab: "Account",
     settingsTab: "Settings",
+    savedTab: "Saved Recipes",
     signedInAs: "Signed in as",
     signOut: "Sign out",
     signInPrompt: "Sign in to add your own recipes.",
@@ -38,11 +42,19 @@ const copy = {
     fullMotion: "Full",
     reducedMotion: "Reduced",
     accessibility: "Accessibility",
+    savedIntro: "Your saved recipes are tied to your account.",
+    savedEmpty: "You have no saved recipes yet.",
+    savedSignInRequired: "Sign in to view your saved recipes.",
+    openRecipe: "Open recipe",
+    removeSaved: "Remove",
+    loadSavedFailed: "Could not load saved recipes.",
+    savedLoading: "Loading saved recipes...",
   },
   da: {
     title: "Profil",
     accountTab: "Konto",
     settingsTab: "Indstillinger",
+    savedTab: "Gemte opskrifter",
     signedInAs: "Logget ind som",
     signOut: "Log ud",
     signInPrompt: "Log ind for at tilføje dine egne opskrifter.",
@@ -75,6 +87,13 @@ const copy = {
     fullMotion: "Fulde",
     reducedMotion: "Reduceret",
     accessibility: "Tilgængelighed",
+    savedIntro: "Dine gemte opskrifter er knyttet til din konto.",
+    savedEmpty: "Du har ingen gemte opskrifter endnu.",
+    savedSignInRequired: "Log ind for at se dine gemte opskrifter.",
+    openRecipe: "Åben opskrift",
+    removeSaved: "Fjern",
+    loadSavedFailed: "Kunne ikke indlæse gemte opskrifter.",
+    savedLoading: "Indlæser gemte opskrifter...",
   },
 }
 
@@ -108,6 +127,8 @@ export default function Profile({ user, settings, onUpdateSettings }) {
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [savedRecipes, setSavedRecipes] = useState([])
+  const [savedLoading, setSavedLoading] = useState(false)
 
   const normalizedEmail = email.trim().toLowerCase()
   const t = copy[settings?.language] || copy.en
@@ -204,11 +225,52 @@ export default function Profile({ user, settings, onUpdateSettings }) {
     setError("")
   }
 
+  useEffect(() => {
+    const loadSaved = async () => {
+      if (activeTab !== "saved") {
+        return
+      }
+
+      if (!user) {
+        setSavedRecipes([])
+        return
+      }
+
+      try {
+        setSavedLoading(true)
+        const items = await fetchSavedRecipes(user.id)
+        setSavedRecipes(items)
+      } catch {
+        setError(t.loadSavedFailed)
+      } finally {
+        setSavedLoading(false)
+      }
+    }
+
+    loadSaved()
+  }, [activeTab, user, t.loadSavedFailed])
+
+  const removeSaved = async (event, recipeId) => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    if (!user) {
+      return
+    }
+
+    try {
+      await removeRecipeLike({ userId: user.id, recipeId })
+      setSavedRecipes((prev) => prev.filter((item) => item.recipe_id !== recipeId))
+    } catch {
+      setError(t.loadSavedFailed)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-1 pb-2">
       <h1 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">{t.title}</h1>
 
-      <div className="mb-3 grid grid-cols-2 gap-2">
+      <div className="mb-3 grid grid-cols-3 gap-2">
         <button
           type="button"
           onClick={() => setActiveTab("account")}
@@ -230,6 +292,17 @@ export default function Profile({ user, settings, onUpdateSettings }) {
           }`}
         >
           {t.settingsTab}
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("saved")}
+          className={`rounded-lg px-3 py-2 text-sm font-semibold ${
+            activeTab === "saved"
+              ? "bg-blue-600 text-white"
+              : "border border-slate-300 bg-white text-slate-700"
+          }`}
+        >
+          {t.savedTab}
         </button>
       </div>
 
@@ -279,6 +352,51 @@ export default function Profile({ user, settings, onUpdateSettings }) {
                 { value: "reduced", label: t.reducedMotion },
               ]}
             />
+          </div>
+        ) : activeTab === "saved" ? (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-600">{t.savedIntro}</p>
+
+            {!user && <p className="text-sm text-slate-600">{t.savedSignInRequired}</p>}
+
+            {user && savedLoading && <p className="text-sm text-slate-500">{t.savedLoading}</p>}
+
+            {user && !savedLoading && savedRecipes.length === 0 && (
+              <p className="text-sm text-slate-500">{t.savedEmpty}</p>
+            )}
+
+            <div className="space-y-2">
+              {savedRecipes.map((item) => (
+                <Link
+                  key={item.recipe_id}
+                  to={`/recipe/${item.recipe_id}`}
+                  className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-2"
+                >
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="h-14 w-14 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="h-14 w-14 rounded-lg bg-slate-100" />
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-800">{item.title}</p>
+                    <p className="text-xs text-slate-500">{t.openRecipe}</p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(event) => removeSaved(event, item.recipe_id)}
+                    className="rounded-full border border-slate-300 bg-white p-2"
+                  >
+                    <Heart size={16} className="text-red-500" fill="#ef4444" />
+                  </button>
+                </Link>
+              ))}
+            </div>
           </div>
         ) : user ? (
           <>

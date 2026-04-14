@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
+import { Heart } from "lucide-react"
 import { supabase } from "../lib/supabase"
 import { normalizeMeal } from "../lib/normalizeMeal"
 import { getMealById } from "../lib/mealsApi"
+import { fetchLikedRecipeIds, removeRecipeLike, saveRecipeLike } from "../lib/likes"
 
 const copy = {
   en: {
@@ -12,6 +14,8 @@ const copy = {
     ingredients: "Ingredients",
     howToMake: "How to make it",
     noInstructions: "No preparation instructions available for this recipe.",
+    loginToSave: "Please sign in to save recipes.",
+    saveFailed: "Could not update saved recipes.",
     days: {
       Monday: "Monday",
       Tuesday: "Tuesday",
@@ -29,6 +33,8 @@ const copy = {
     ingredients: "Ingredienser",
     howToMake: "Sådan laver du den",
     noInstructions: "Ingen tilberedningsvejledning tilgængelig for denne opskrift.",
+    loginToSave: "Log ind for at gemme opskrifter.",
+    saveFailed: "Kunne ikke opdatere gemte opskrifter.",
     days: {
       Monday: "Mandag",
       Tuesday: "Tirsdag",
@@ -41,13 +47,15 @@ const copy = {
   },
 }
 
-export default function RecipeDetail({ language = "en" }) {
+export default function RecipeDetail({ language = "en", user }) {
   const { id } = useParams()
   const navigate = useNavigate()
   const t = copy[language] || copy.en
 
   const [recipe, setRecipe] = useState(null)
   const [showDays, setShowDays] = useState(false)
+  const [isLiked, setIsLiked] = useState(false)
+  const [likeLoading, setLikeLoading] = useState(false)
 
   const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
 
@@ -56,10 +64,52 @@ export default function RecipeDetail({ language = "en" }) {
     const load = async () => {
       const meal = await getMealById(id)
       setRecipe(meal)
+
+      if (user && meal?.idMeal) {
+        try {
+          const ids = await fetchLikedRecipeIds(user.id)
+          setIsLiked(ids.has(meal.idMeal))
+        } catch {
+          setIsLiked(false)
+        }
+      } else {
+        setIsLiked(false)
+      }
     }
 
     load()
-  }, [id])
+  }, [id, user])
+
+  const toggleLike = async () => {
+    if (!recipe?.idMeal) {
+      return
+    }
+
+    if (!user) {
+      alert(t.loginToSave)
+      return
+    }
+
+    try {
+      setLikeLoading(true)
+      if (isLiked) {
+        await removeRecipeLike({ userId: user.id, recipeId: recipe.idMeal })
+        setIsLiked(false)
+      } else {
+        await saveRecipeLike({
+          userId: user.id,
+          recipeId: recipe.idMeal,
+          title: recipe.strMeal || "Untitled recipe",
+          image: recipe.strMealThumb || null,
+        })
+        setIsLiked(true)
+      }
+    } catch {
+      alert(t.saveFailed)
+    } finally {
+      setLikeLoading(false)
+    }
+  }
 
   const addToDay = async (day) => {
     const clean = normalizeMeal(recipe)
@@ -93,9 +143,22 @@ export default function RecipeDetail({ language = "en" }) {
         ← {t.back}
       </Link>
 
-      <h1 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">
-        {recipe.strMeal}
-      </h1>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{recipe.strMeal}</h1>
+        <button
+          type="button"
+          onClick={toggleLike}
+          disabled={likeLoading}
+          className="rounded-full border border-slate-300 bg-white/80 p-2 backdrop-blur disabled:opacity-60"
+          aria-label="Toggle saved recipe"
+        >
+          <Heart
+            size={20}
+            className={isLiked ? "text-red-500" : "text-slate-600"}
+            fill={isLiked ? "#ef4444" : "transparent"}
+          />
+        </button>
+      </div>
 
       <img
         src={recipe.strMealThumb}

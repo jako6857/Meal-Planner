@@ -39,7 +39,16 @@ This adds:
 - RLS policies so only authenticated users can create/update/delete their own recipes
 - Public read access so everyone can browse recipes
 
-### 3) Import many recipes
+### 3) Create likes table in Supabase
+
+Run SQL from `supabase/recipe_likes.sql` in the Supabase SQL editor.
+
+This adds:
+
+- Per-user saved recipes (likes)
+- RLS policies so users can only read/write their own saved recipes
+
+### 4) Import many recipes
 
 ```bash
 npm run import:recipes
@@ -47,7 +56,7 @@ npm run import:recipes
 
 This pulls a large recipe set from TheMealDB and upserts into `public.recipes`.
 
-### 4) Run the app
+### 5) Run the app
 
 ```bash
 npm install
@@ -60,3 +69,4 @@ npm run dev
 - If the table is empty or unavailable, the app falls back to TheMealDB automatically.
 - Since data is local in Supabase after import, you get more recipes and fewer external API calls during normal use.
 - Users can create their own recipes in-app from the Create tab after signing in on the Profile tab.
+- Logged-in users can save/unsave recipes with hearts, and see them under Profile -> Saved Recipes.
