@@ -11,8 +11,8 @@ const labels = {
   },
   da: {
     home: "Hjem",
-    meals: "Maaltider",
-    shop: "Indkob",
+    meals: "Måltider",
+    shop: "Indkøb",
     create: "Opret",
     profile: "Profil",
   },

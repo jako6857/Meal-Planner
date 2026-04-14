@@ -14,7 +14,7 @@ const CATEGORY_OPTIONS = [
 ]
 
 const CUISINE_OPTIONS = [
-  { value: "", en: "All cuisines", da: "Alle koekkener" },
+  { value: "", en: "All cuisines", da: "Alle køkkener" },
   { value: "Italian", en: "Italian", da: "Italiensk" },
   { value: "Mexican", en: "Mexican", da: "Mexicansk" },
   { value: "American", en: "American", da: "Amerikansk" },
@@ -36,15 +36,15 @@ const copy = {
   },
   da: {
     title: "Opskrifter",
-    searchPlaceholder: "Soeg opskrifter...",
+    searchPlaceholder: "Søg opskrifter...",
     ownRecipes: "Egne opskrifter",
     all: "Alle",
-    allCuisines: "Alle koekkener",
+    allCuisines: "Alle køkkener",
     noRecipes: "Ingen opskrifter fundet for denne filterkombination.",
-    loading: "Indlaeser opskrifter...",
+    loading: "Indlæser opskrifter...",
     supabaseOnly: "Viser kun opskrifter fra din Supabase-database.",
-    loadMore: "Indlaes flere opskrifter",
-    failedLoad: "Kunne ikke indlaese opskrifter",
+    loadMore: "Indlæs flere opskrifter",
+    failedLoad: "Kunne ikke indlæse opskrifter",
   },
 }
 

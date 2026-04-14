@@ -22,15 +22,15 @@ const copy = {
     title: "Madplan",
     viewDetails: "Se detaljer",
     remove: "Fjern",
-    addMeal: "+ Tilfoej maaltid",
+    addMeal: "+ Tilføj måltid",
     days: {
       Monday: "Mandag",
       Tuesday: "Tirsdag",
       Wednesday: "Onsdag",
       Thursday: "Torsdag",
       Friday: "Fredag",
-      Saturday: "Loerdag",
-      Sunday: "Soendag",
+      Saturday: "Lørdag",
+      Sunday: "Søndag",
     },
   },
 }

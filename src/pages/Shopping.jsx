@@ -7,8 +7,8 @@ const copy = {
     empty: "No ingredients found yet. Add meals to your plan first.",
   },
   da: {
-    title: "Indkoebsliste",
-    empty: "Ingen ingredienser endnu. Tilfoej foerst maaltider til din plan.",
+    title: "Indkøbsliste",
+    empty: "Ingen ingredienser endnu. Tilføj først måltider til din plan.",
   },
 }
 
