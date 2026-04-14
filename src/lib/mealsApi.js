@@ -42,25 +42,6 @@ const fetchBySearchApi = async (query) => fetchApi(`/search.php?s=${encodeURICom
 const fetchByCategoryApi = async (category) => fetchApi(`/filter.php?c=${encodeURIComponent(category)}`)
 const fetchByCuisineApi = async (cuisine) => fetchApi(`/filter.php?a=${encodeURIComponent(cuisine)}`)
 
-const hydrateIfPartialMeals = async (meals) => {
-  const needsHydration = meals.some((meal) => !meal.strInstructions)
-  if (!needsHydration) {
-    return meals
-  }
-
-  const hydrated = await Promise.all(
-    meals.map(async (meal) => {
-      if (meal.strInstructions) {
-        return meal
-      }
-      const detail = await getMealById(meal.idMeal)
-      return detail || meal
-    })
-  )
-
-  return hydrated
-}
-
 const uniqueById = (meals) => {
   const map = new Map()
   meals.forEach((meal) => {
@@ -99,7 +80,32 @@ const querySupabaseRecipes = async ({ query = "", category = "", cuisine = "", p
   }
 }
 
-const fallbackFromExternalApi = async ({ query = "", category = "", cuisine = "", page = 1, pageSize = 20 }) => {
+const querySupabaseRecipesAll = async ({ query = "", category = "", cuisine = "" }) => {
+  let dbQuery = supabase
+    .from("recipes")
+    .select("*")
+    .order("title", { ascending: true })
+
+  if (query) {
+    dbQuery = dbQuery.ilike("title", `%${query}%`)
+  }
+  if (category) {
+    dbQuery = dbQuery.eq("category", category)
+  }
+  if (cuisine) {
+    dbQuery = dbQuery.eq("cuisine", cuisine)
+  }
+
+  const { data, error } = await dbQuery
+
+  if (error) {
+    throw error
+  }
+
+  return (data || []).map(toMealShape)
+}
+
+const fetchExternalMeals = async ({ query = "", category = "", cuisine = "" }) => {
   let meals = []
 
   if (query) {
@@ -129,22 +135,42 @@ const fallbackFromExternalApi = async ({ query = "", category = "", cuisine = ""
     })
   }
 
-  const hydrated = await hydrateIfPartialMeals(uniqueById(meals))
-  const total = hydrated.length
+  return uniqueById(meals)
+}
+
+const fallbackFromExternalApi = async ({ query = "", category = "", cuisine = "", page = 1, pageSize = 20 }) => {
+  const externalMeals = await fetchExternalMeals({ query, category, cuisine })
+  const total = externalMeals.length
   const from = (page - 1) * pageSize
-  const items = hydrated.slice(from, from + pageSize)
+  const items = externalMeals.slice(from, from + pageSize)
 
   return { items, total }
 }
 
-export const searchMeals = async ({ query = "", category = "", cuisine = "", page = 1, pageSize = 20 }) => {
-  try {
-    const dbResult = await querySupabaseRecipes({ query, category, cuisine, page, pageSize })
-    if (dbResult.total > 0) {
-      return dbResult
+export const searchMeals = async ({ query = "", category = "", cuisine = "", page = 1, pageSize = 20, source = "all" }) => {
+  if (source === "own") {
+    try {
+      return await querySupabaseRecipes({ query, category, cuisine, page, pageSize })
+    } catch {
+      return { items: [], total: 0 }
     }
+  }
+
+  // Default behavior merges Supabase recipes with TheMealDB results.
+  try {
+    const [dbItems, externalItems] = await Promise.all([
+      querySupabaseRecipesAll({ query, category, cuisine }),
+      fetchExternalMeals({ query, category, cuisine }),
+    ])
+
+    const merged = uniqueById([...dbItems, ...externalItems])
+    const total = merged.length
+    const from = (page - 1) * pageSize
+    const items = merged.slice(from, from + pageSize)
+
+    return { items, total }
   } catch {
-    // If the table is missing or inaccessible, fall back to TheMealDB.
+    // If Supabase table is missing or inaccessible, fall back to TheMealDB.
   }
 
   return fallbackFromExternalApi({ query, category, cuisine, page, pageSize })

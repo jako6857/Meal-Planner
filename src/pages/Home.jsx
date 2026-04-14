@@ -9,6 +9,7 @@ export default function Home() {
   const [search, setSearch] = useState("")
   const [category, setCategory] = useState("")
   const [cuisine, setCuisine] = useState("")
+  const [source, setSource] = useState("all")
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -20,7 +21,7 @@ export default function Home() {
     }, 250)
 
     return () => clearTimeout(timer)
-  }, [search, category, cuisine])
+  }, [search, category, cuisine, source])
 
   const loadRecipes = async ({ page: nextPage, append }) => {
     try {
@@ -31,6 +32,7 @@ export default function Home() {
         query: search,
         category,
         cuisine,
+        source,
         page: nextPage,
         pageSize: PAGE_SIZE,
       })
@@ -74,6 +76,15 @@ export default function Home() {
       />
 
       <div className="mb-3 flex flex-wrap gap-2">
+        <button
+          onClick={() => setSource((prev) => (prev === "own" ? "all" : "own"))}
+          className={`rounded-full px-3 py-1.5 text-sm ${
+            source === "own" ? "bg-emerald-600 text-white" : "bg-white text-slate-700 border border-slate-200"
+          }`}
+        >
+          Own Recipes
+        </button>
+
         {["", "Breakfast", "Dessert", "Seafood", "Chicken", "Vegetarian"].map((c) => (
           <button
             key={c}
@@ -123,6 +134,10 @@ export default function Home() {
       )}
 
       {loading && <p className="mt-4 text-sm text-slate-500">Loading recipes...</p>}
+
+      {source === "own" && !loading && (
+        <p className="mt-2 text-xs text-slate-500">Showing recipes from your Supabase database only.</p>
+      )}
 
       {!loading && recipes.length < total && (
         <button
