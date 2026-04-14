@@ -1,6 +1,8 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabase"
+
+const RECIPE_IMAGE_BUCKET = "recipe-images"
 
 const parseIngredients = (text) =>
   text
@@ -18,6 +20,8 @@ const parseIngredients = (text) =>
 
 export default function CreateRecipe({ user }) {
   const navigate = useNavigate()
+  const galleryInputRef = useRef(null)
+  const cameraInputRef = useRef(null)
 
   const [title, setTitle] = useState("")
   const [category, setCategory] = useState("")
@@ -27,6 +31,60 @@ export default function CreateRecipe({ user }) {
   const [ingredientsText, setIngredientsText] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+
+  const uploadImageFile = async (file) => {
+    if (!file) {
+      return
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose a valid image file.")
+      return
+    }
+
+    try {
+      setUploadingImage(true)
+      setError("")
+
+      const extension = file.name.split(".").pop() || "jpg"
+      const path = `${user.id}/${crypto.randomUUID()}.${extension}`
+
+      const { error: uploadError } = await supabase.storage
+        .from(RECIPE_IMAGE_BUCKET)
+        .upload(path, file, { upsert: false })
+
+      if (uploadError) {
+        throw uploadError
+      }
+
+      const { data } = supabase.storage
+        .from(RECIPE_IMAGE_BUCKET)
+        .getPublicUrl(path)
+
+      setImage(data.publicUrl)
+    } catch (err) {
+      setError(
+        `Image upload failed: ${err.message}. Ensure storage bucket '${RECIPE_IMAGE_BUCKET}' exists and allows uploads for authenticated users.`
+      )
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const onPickGallery = () => {
+    galleryInputRef.current?.click()
+  }
+
+  const onPickCamera = () => {
+    cameraInputRef.current?.click()
+  }
+
+  const onFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    await uploadImageFile(file)
+    e.target.value = ""
+  }
 
   const submit = async (e) => {
     e.preventDefault()
@@ -105,12 +163,61 @@ export default function CreateRecipe({ user }) {
           />
         </div>
 
-        <input
-          value={image}
-          onChange={(e) => setImage(e.target.value)}
-          className="w-full rounded-lg border border-slate-200 px-3 py-2"
-          placeholder="Image URL"
-        />
+        <div className="rounded-xl border border-slate-200 p-3">
+          <p className="mb-2 text-sm font-semibold text-slate-700">Recipe image</p>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onPickGallery}
+              disabled={uploadingImage}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
+            >
+              Choose from gallery
+            </button>
+
+            <button
+              type="button"
+              onClick={onPickCamera}
+              disabled={uploadingImage}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
+            >
+              Take photo
+            </button>
+          </div>
+
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            onChange={onFileChange}
+            className="hidden"
+          />
+
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={onFileChange}
+            className="hidden"
+          />
+
+          {uploadingImage && <p className="mt-2 text-sm text-slate-500">Uploading image...</p>}
+
+          {image && (
+            <div className="mt-3">
+              <img src={image} alt="Recipe preview" className="h-40 w-full rounded-lg object-cover" />
+            </div>
+          )}
+
+          <input
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+            className="mt-3 w-full rounded-lg border border-slate-200 px-3 py-2"
+            placeholder="Or paste image URL manually"
+          />
+        </div>
 
         <textarea
           value={instructions}
@@ -130,7 +237,7 @@ export default function CreateRecipe({ user }) {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || uploadingImage}
           className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
         >
           {loading ? "Saving..." : "Save Recipe"}
