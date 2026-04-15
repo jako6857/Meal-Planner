@@ -67,9 +67,13 @@ npm run dev
 
 This repo includes a GitHub Actions workflow at `.github/workflows/deploy-pages.yml`.
 
-1. In GitHub, open Settings -> Pages.
-2. Under Source, select `GitHub Actions`.
-3. Push to `main` (or run the workflow manually) to deploy `dist`.
+1. In GitHub, open Settings -> Secrets and variables -> Actions.
+2. Add repository secrets:
+	- `VITE_SUPABASE_URL`
+	- `VITE_SUPABASE_ANON_KEY`
+3. In GitHub, open Settings -> Pages.
+4. Set Source to `Deploy from a branch` and choose `gh-pages` with `/ (root)`.
+5. Push to `main` (or run the workflow manually) to deploy `dist`.
 
 Note: On `github.io`, the app uses hash-based routing to avoid 404s on refresh/deep links.
 
