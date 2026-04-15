@@ -128,7 +128,7 @@ export const fetchMealPlans = async () => {
         writeCacheMap(baseMap)
       }
     } catch {
-      // Fall back to local cache.
+      // Fallback to local cache.
     }
   }
 
