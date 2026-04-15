@@ -1,5 +1,11 @@
 const CACHE_NAME = "meal-planner-pwa-v1"
-const APP_SHELL = ["/", "/index.html", "/manifest.json", "/favicon.svg"]
+const BASE_PATH = self.location.pathname.replace(/sw\.js$/, "")
+const APP_SHELL = [
+  BASE_PATH,
+  `${BASE_PATH}index.html`,
+  `${BASE_PATH}manifest.json`,
+  `${BASE_PATH}favicon.svg`,
+]
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -30,7 +36,7 @@ self.addEventListener("fetch", (event) => {
 
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match("/index.html"))
+      fetch(event.request).catch(() => caches.match(`${BASE_PATH}index.html`))
     )
     return
   }

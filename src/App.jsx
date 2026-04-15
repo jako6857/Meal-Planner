@@ -89,8 +89,11 @@ function App() {
     setSettings((prev) => ({ ...prev, ...next }))
   }
 
+  const isGitHubPages = window.location.hostname.endsWith("github.io")
+  const basename = isGitHubPages ? "/Meal-Planner" : "/"
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <div className="min-h-screen bg-slate-50 text-slate-900">
         <main className="mx-auto w-full max-w-5xl px-3 pt-3 pb-28 sm:px-4 sm:pt-4">
           <Routes>
