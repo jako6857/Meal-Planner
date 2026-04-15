@@ -1,10 +1,11 @@
-const CACHE_NAME = "meal-planner-pwa-v1"
+const CACHE_NAME = "meal-planner-pwa-v2"
 const BASE_PATH = self.location.pathname.replace(/sw\.js$/, "")
 const APP_SHELL = [
   BASE_PATH,
   `${BASE_PATH}index.html`,
   `${BASE_PATH}manifest.json`,
   `${BASE_PATH}favicon.svg`,
+  `${BASE_PATH}meal-planner-icon.png`,
 ]
 
 self.addEventListener("install", (event) => {
