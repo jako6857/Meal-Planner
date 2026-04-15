@@ -63,6 +63,16 @@ npm install
 npm run dev
 ```
 
+## GitHub Pages Deploy
+
+This repo includes a GitHub Actions workflow at `.github/workflows/deploy-pages.yml`.
+
+1. In GitHub, open Settings -> Pages.
+2. Under Source, select `GitHub Actions`.
+3. Push to `main` (or run the workflow manually) to deploy `dist`.
+
+Note: On `github.io`, the app uses hash-based routing to avoid 404s on refresh/deep links.
+
 ## Notes
 
 - Home page reads from `public.recipes` with server-side filtering and paging.
