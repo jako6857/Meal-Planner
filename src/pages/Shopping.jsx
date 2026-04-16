@@ -12,16 +12,16 @@ const copy = {
   },
 }
 
-export default function Shopping({ language = "en" }) {
+export default function Shopping({ language = "en", user }) {
   const [items, setItems] = useState([])
   const t = copy[language] || copy.en
 
   useEffect(() => {
     load()
-  }, [])
+  }, [user?.id])
 
   const load = async () => {
-    const data = await fetchMealPlans()
+    const data = await fetchMealPlans(user?.id)
 
     const ingredients = []
 

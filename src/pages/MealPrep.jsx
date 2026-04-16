@@ -35,7 +35,7 @@ const copy = {
   },
 }
 
-export default function MealPrep({ language = "en" }) {
+export default function MealPrep({ language = "en", user }) {
   const [meals, setMeals] = useState([])
   const t = copy[language] || copy.en
 
@@ -43,15 +43,15 @@ export default function MealPrep({ language = "en" }) {
 
   useEffect(() => {
     loadMeals()
-  }, [])
+  }, [user?.id])
 
   const loadMeals = async () => {
-    const data = await fetchMealPlans()
+    const data = await fetchMealPlans(user?.id)
     setMeals(data || [])
   }
 
   const removeMeal = async (day) => {
-    await deleteMealPlan(day)
+    await deleteMealPlan(day, user?.id)
     loadMeals()
   }
 

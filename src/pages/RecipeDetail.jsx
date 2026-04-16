@@ -120,7 +120,7 @@ export default function RecipeDetail({ language = "en", user }) {
         title: clean.title,
         image: clean.image,
         ingredients: clean.ingredients,
-      })
+      }, user?.id)
     } catch (error) {
       alert(error.message || "Failed to save meal plan")
       return

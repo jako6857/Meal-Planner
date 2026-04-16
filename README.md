@@ -48,7 +48,16 @@ This adds:
 - Per-user saved recipes (likes)
 - RLS policies so users can only read/write their own saved recipes
 
-### 4) Import many recipes
+### 4) Create meal plans table in Supabase
+
+Run SQL from `supabase/meal_plans.sql` in the Supabase SQL editor.
+
+This adds:
+
+- Per-user meal plans (`user_id + day` uniqueness)
+- RLS policies so users can only read/write their own meal plans
+
+### 5) Import many recipes
 
 ```bash
 npm run import:recipes
@@ -56,7 +65,7 @@ npm run import:recipes
 
 This pulls a large recipe set from TheMealDB and upserts into `public.recipes`.
 
-### 5) Run the app
+### 6) Run the app
 
 ```bash
 npm install

@@ -73,17 +73,21 @@ function App() {
   }, [user?.id])
 
   useEffect(() => {
-    void syncPendingMealPlans()
+    if (!user?.id) {
+      return
+    }
+
+    void syncPendingMealPlans(user.id)
 
     const onOnline = () => {
-      void syncPendingMealPlans()
+      void syncPendingMealPlans(user.id)
     }
 
     window.addEventListener("online", onOnline)
     return () => {
       window.removeEventListener("online", onOnline)
     }
-  }, [])
+  }, [user?.id])
 
   const updateSettings = (next) => {
     setSettings((prev) => ({ ...prev, ...next }))
@@ -98,8 +102,8 @@ function App() {
         <main className="mx-auto w-full max-w-5xl px-3 pt-3 pb-28 sm:px-4 sm:pt-4">
           <Routes>
             <Route path="/" element={<Home language={settings.language} user={user} />} />
-            <Route path="/meal-prep" element={<MealPrep language={settings.language} />} />
-            <Route path="/shopping" element={<Shopping language={settings.language} />} />
+            <Route path="/meal-prep" element={<MealPrep language={settings.language} user={user} />} />
+            <Route path="/shopping" element={<Shopping language={settings.language} user={user} />} />
             <Route path="/create-recipe" element={<CreateRecipe user={user} language={settings.language} />} />
             <Route
               path="/profile"

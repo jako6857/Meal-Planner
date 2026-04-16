@@ -1,7 +1,7 @@
 import { supabase } from "./supabase"
 
-const CACHE_KEY = "meal-plans-cache:v1"
-const PENDING_KEY = "meal-plans-pending:v1"
+const CACHE_PREFIX = "meal-plans-cache:v2:"
+const PENDING_PREFIX = "meal-plans-pending:v2:"
 
 const readJson = (key, fallback) => {
   try {
@@ -23,10 +23,14 @@ const writeJson = (key, value) => {
   }
 }
 
-const readCacheMap = () => readJson(CACHE_KEY, {})
-const writeCacheMap = (map) => writeJson(CACHE_KEY, map)
-const readPendingMap = () => readJson(PENDING_KEY, {})
-const writePendingMap = (map) => writeJson(PENDING_KEY, map)
+const scopeKey = (userId) => userId || "guest"
+const cacheKey = (userId) => `${CACHE_PREFIX}${scopeKey(userId)}`
+const pendingKey = (userId) => `${PENDING_PREFIX}${scopeKey(userId)}`
+
+const readCacheMap = (userId) => readJson(cacheKey(userId), {})
+const writeCacheMap = (userId, map) => writeJson(cacheKey(userId), map)
+const readPendingMap = (userId) => readJson(pendingKey(userId), {})
+const writePendingMap = (userId, map) => writeJson(pendingKey(userId), map)
 
 const mapToList = (map) => Object.values(map)
 
@@ -40,13 +44,13 @@ const listToMap = (list) => {
   return map
 }
 
-const setPending = (day, action) => {
-  const pending = readPendingMap()
+const setPending = (userId, day, action) => {
+  const pending = readPendingMap(userId)
   pending[day] = {
     ...action,
     updated_at: new Date().toISOString(),
   }
-  writePendingMap(pending)
+  writePendingMap(userId, pending)
 }
 
 const applyPendingToMap = (baseMap, pendingMap) => {
@@ -61,12 +65,16 @@ const applyPendingToMap = (baseMap, pendingMap) => {
   return next
 }
 
-const updateCacheFromRemote = (rows) => {
-  writeCacheMap(listToMap(rows || []))
+const updateCacheFromRemote = (userId, rows) => {
+  writeCacheMap(userId, listToMap(rows || []))
 }
 
-export const syncPendingMealPlans = async () => {
-  const pending = readPendingMap()
+export const syncPendingMealPlans = async (userId) => {
+  if (!userId) {
+    return { synced: 0, failed: 0 }
+  }
+
+  const pending = readPendingMap(userId)
   const entries = Object.entries(pending)
 
   if (!entries.length || !navigator.onLine) {
@@ -79,14 +87,20 @@ export const syncPendingMealPlans = async () => {
   for (const [day, action] of entries) {
     try {
       if (action.type === "delete") {
-        const { error } = await supabase.from("meal_plans").delete().eq("day", day)
+        const { error } = await supabase
+          .from("meal_plans")
+          .delete()
+          .eq("user_id", userId)
+          .eq("day", day)
         if (error) {
           throw error
         }
       }
 
       if (action.type === "upsert") {
-        const { error } = await supabase.from("meal_plans").upsert(action.meal, { onConflict: "day" })
+        const { error } = await supabase
+          .from("meal_plans")
+          .upsert({ ...action.meal, user_id: userId }, { onConflict: "user_id,day" })
         if (error) {
           throw error
         }
@@ -99,13 +113,13 @@ export const syncPendingMealPlans = async () => {
     }
   }
 
-  writePendingMap(nextPending)
+  writePendingMap(userId, nextPending)
 
   if (!Object.keys(nextPending).length) {
     try {
-      const { data, error } = await supabase.from("meal_plans").select("*")
+      const { data, error } = await supabase.from("meal_plans").select("*").eq("user_id", userId)
       if (!error) {
-        updateCacheFromRemote(data || [])
+        updateCacheFromRemote(userId, data || [])
       }
     } catch {
       // Cache refresh is best effort.
@@ -115,17 +129,17 @@ export const syncPendingMealPlans = async () => {
   return { synced, failed: Object.keys(nextPending).length }
 }
 
-export const fetchMealPlans = async () => {
-  const pending = readPendingMap()
-  let baseMap = readCacheMap()
+export const fetchMealPlans = async (userId) => {
+  const pending = readPendingMap(userId)
+  let baseMap = readCacheMap(userId)
 
-  if (navigator.onLine) {
+  if (navigator.onLine && userId) {
     try {
-      await syncPendingMealPlans()
-      const { data, error } = await supabase.from("meal_plans").select("*")
+      await syncPendingMealPlans(userId)
+      const { data, error } = await supabase.from("meal_plans").select("*").eq("user_id", userId)
       if (!error) {
         baseMap = listToMap(data || [])
-        writeCacheMap(baseMap)
+        writeCacheMap(userId, baseMap)
       }
     } catch {
       // Fallback to local cache.
@@ -135,32 +149,32 @@ export const fetchMealPlans = async () => {
   return mapToList(applyPendingToMap(baseMap, pending))
 }
 
-export const upsertMealPlan = async (meal) => {
+export const upsertMealPlan = async (meal, userId) => {
   if (!meal?.day) {
     throw new Error("Missing meal plan day")
   }
 
-  const cache = readCacheMap()
+  const cache = readCacheMap(userId)
   cache[meal.day] = meal
-  writeCacheMap(cache)
-  setPending(meal.day, { type: "upsert", meal })
+  writeCacheMap(userId, cache)
+  setPending(userId, meal.day, { type: "upsert", meal })
 
-  if (navigator.onLine) {
-    await syncPendingMealPlans()
+  if (navigator.onLine && userId) {
+    await syncPendingMealPlans(userId)
   }
 }
 
-export const deleteMealPlan = async (day) => {
+export const deleteMealPlan = async (day, userId) => {
   if (!day) {
     throw new Error("Missing meal plan day")
   }
 
-  const cache = readCacheMap()
+  const cache = readCacheMap(userId)
   delete cache[day]
-  writeCacheMap(cache)
-  setPending(day, { type: "delete" })
+  writeCacheMap(userId, cache)
+  setPending(userId, day, { type: "delete" })
 
-  if (navigator.onLine) {
-    await syncPendingMealPlans()
+  if (navigator.onLine && userId) {
+    await syncPendingMealPlans(userId)
   }
 }
