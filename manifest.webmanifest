@@ -1,0 +1,19 @@
+{
+	"name": "Meal Planner App",
+	"short_name": "Meal Planner",
+	"id": "/Meal-Planner/",
+	"start_url": "/Meal-Planner/#/",
+	"scope": "/Meal-Planner/",
+	"display": "standalone",
+	"background_color": "#ffffff",
+	"theme_color": "#ffffff",
+	"orientation": "portrait-primary",
+	"icons": [
+		{
+			"src": "/Meal-Planner/meal-planner-icon.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any maskable"
+		}
+	]
+}
